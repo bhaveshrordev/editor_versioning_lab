@@ -5,11 +5,57 @@
     <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
   <% end %>
 
-  <h1 class="font-bold text-4xl">Showing post</h1>
+  <h1 class="font-bold text-4xl mb-6">Showing Post</h1>
 
-  <%= render @post %>
+  <div class="mb-8">
+    <p><strong>Name:</strong> <%= @post.name %></p>
+    <p><strong>Description:</strong></p>
+    <div class="prose border p-3 rounded-md shadow-sm bg-white">
+      <%= @post.description&.html_safe %>
+    </div>
+  </div>
 
-  <%= link_to "Edit this post", edit_post_path(@post), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <%= link_to "Back to posts", posts_path, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <%= button_to "Destroy this post", @post, method: :delete, form_class: "sm:inline-block mt-2 sm:mt-0 sm:ml-2", class: "w-full rounded-md px-3.5 py-2.5 text-white bg-red-600 hover:bg-red-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
+  <div class="mt-8">
+    <h2 class="font-bold text-2xl mb-4">Version History</h2>
+
+    <% if @post.versions.any? %>
+      <ul class="space-y-4">
+        <% @post.versions.reverse.each_with_index do |version, index| %>
+          <li class="border p-4 rounded-md bg-gray-50">
+            <p class="font-semibold mb-2">
+              Version <%= @post.versions.size - index %> - <%= version.event.capitalize %> at <%= version.created_at.strftime("%Y-%m-%d %H:%M:%S") %>
+            </p>
+
+            <% if version.object.present? %>
+              <% begin %>
+                <% post_object = YAML.safe_load(
+                  version.object,
+                  permitted_classes: [Time, Date, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone],
+                  aliases: true
+                ) %>
+
+                <p><strong>Name:</strong> <%= post_object['name'] %></p>
+                <p><strong>Description:</strong></p>
+                <div class="prose border p-3 rounded-md shadow-sm bg-white">
+                  <%= post_object['description']&.html_safe %>
+                </div>
+              <% rescue Psych::DisallowedClass => e %>
+                <p class="text-red-500">Unable to load version details: <%= e.message %></p>
+              <% end %>
+            <% else %>
+              <p class="text-gray-500">No changes in this version.</p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-gray-500">No version history available.</p>
+    <% end %>
+  </div>
+
+  <div class="mt-6 flex flex-wrap gap-2">
+    <%= link_to "Edit this post", edit_post_path(@post), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
+    <%= link_to "Back to posts", posts_path, class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
+    <%= button_to "Destroy this post", @post, method: :delete, form_class: "sm:inline-block", class: "w-full rounded-md px-3.5 py-2.5 text-white bg-red-600 hover:bg-red-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
+  </div>
 </div>
